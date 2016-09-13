@@ -8,4 +8,3 @@ A Docker image to use as a basis for Ruby 2.3 based web applications running und
 * Nginx is a high performance HTTP server: https://www.nginx.com/
 * OpenShift is a container application platform based on Docker: https://www.openshift.org/
 * Docker is an software containerization tool: https://www.docker.com/
-
