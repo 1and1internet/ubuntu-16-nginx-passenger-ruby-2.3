@@ -5,7 +5,6 @@ ENV GEM_HOME /var/www/._gems
 ENV PATH ${PATH}:${GEM_HOME}/bin
 COPY files /
 RUN \
-	mkdir -p $GEM_HOME && \
 	apt-get update -q && \
 	apt-get install -y curl gnupg build-essential ruby2.3-dev libsqlite3-dev nodejs && \
 	ln -sf /usr/bin/nodejs /usr/local/bin/node && \

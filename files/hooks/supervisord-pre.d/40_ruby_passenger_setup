@@ -2,13 +2,15 @@
 
 set -e
 
-EMPTY=$([ $(ls -a /var/www | wc -l) -eq 2 ] && echo 'true' || echo 'false')
+EMPTY=$([ $(ls -a /var/www | egrep -v '._gems|public' | wc -l) -eq 2 ] && echo 'true' || echo 'false')
 
 if [ $EMPTY == 'true' ]; then
     echo "No files found in /var/www, attempting to get lock"
     (
         if flock -n 9; then
             cp -r /usr/src/* /var/www
+            gem install -N bundler
+            bundle install
         else
             echo 'No lock, exiting'
             exit
