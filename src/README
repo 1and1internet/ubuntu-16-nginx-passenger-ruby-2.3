@@ -1,0 +1,9 @@
+Passenger document root: /var/www/public
+
+# An example using Sinatra is provided by default
+
+# Example Rails setup
+
+ssh-user:~$ gem install rails
+ssh-user:~$ rails new ../www
+ssh-user:~$ touch tmp/restart.txt
