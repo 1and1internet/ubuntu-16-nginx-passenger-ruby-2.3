@@ -5,5 +5,5 @@ Passenger document root: /var/www/public
 # Example Rails setup
 
 ssh-user:~$ gem install rails
-ssh-user:~$ rails new ../www
+ssh-user:~$ rails new .
 ssh-user:~$ touch tmp/restart.txt
