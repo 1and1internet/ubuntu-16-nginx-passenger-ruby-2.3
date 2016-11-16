@@ -10,8 +10,13 @@ if [ $EMPTY == 'true' ]; then
         if flock -n 9; then
             mkdir public
             cp -r /usr/src/* /var/www
-            gem install -N bundler
-            bundle install
+            
+            #GEM_HOME=$SHARED_GEM_HOME
+            #GEM_PATH=$SHARED_GEM_HOME
+            #PATH=$GEM_PATH:$PATH
+            
+            #gem install -N bundler
+            #bundle install
         else
             echo 'No lock, exiting'
             exit
@@ -20,3 +25,10 @@ if [ $EMPTY == 'true' ]; then
     
     rm -f /var/www/alockfile
 fi
+
+/usr/bin/sync_gems.sh &
+disown %1
+echo "Giving bundler extra time to sync gems"
+sleep 10
+
+
