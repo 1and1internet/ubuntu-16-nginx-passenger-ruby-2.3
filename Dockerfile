@@ -3,9 +3,12 @@ MAINTAINER brian.wilkinson@1and1.co.uk
 ARG DEBIAN_FRONTEND=noninteractive
 
 
+#TODO: Revert this which is a hack to please the ruby tests in imagedrone
+#ENV SHARED_GEM_HOME=/var/www/._gems \
+#    GEM_HOME=/gems_local
+ENV GEM_HOME=/var/www/._gems \
+    SHARED_GEM_HOME=/gems_local
 
-ENV SHARED_GEM_HOME=/var/www/._gems \
-    GEM_HOME=/gems_local
     
 ENV GEM_PATH=$GEM_HOME:$SHARED_GEM_HOME \
     PATH=${GEM_HOME}/bin:${SHARED_GEM_HOME}/bin:${PATH}
