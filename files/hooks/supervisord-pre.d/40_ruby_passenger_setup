@@ -12,8 +12,7 @@ if [ $EMPTY == 'true' ]; then
             cp -r /usr/src/* /var/www
             
             gem install -N bundler
-            export HOME=/var/www
-            bundle
+            bundle install
         else
             echo 'No lock, exiting'
             exit
