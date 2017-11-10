@@ -1,52 +1,75 @@
-build:
+---
+pipeline:
+
+  pull_tools:
+    when:
+      event: push
+    image: docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /secrets:/secrets
+    commands:
+      - docker --config /secrets/ pull 1and1internet/template-library-tools
+      - docker --config /secrets/ pull 1and1internet/ubuntu-16-rspec
+
+  pull_upstream:
+    when:
+      event: push
+    image: 1and1internet/template-library-tools
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    commands:
+      - make --environment-overrides pull IMAGE_NAME=build-${CI_BUILD_NUMBER}-${CI_REPO#*/}/${CI_REPO#*/}
+
   build:
     when:
       event: push
-    image: 1and1internet/template-library-tools:giraffe
-    pull: true
-    auth_config:
-      username: $$DOCKERHUB_USERNAME
-      password: $$DOCKERHUB_PASSWORD
-      email: $$DOCKERHUB_EMAIL
+    image: 1and1internet/template-library-tools
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     commands:
-      - python3 -u /scripts/images/build.py
-  spectests:
-    image: 1and1internet/ubuntu-16-rspec:latest
-    pull: true
+      - make --environment-overrides build IMAGE_NAME=build-${CI_BUILD_NUMBER}-${CI_REPO#*/}/${CI_REPO#*/}
+
+  test:
+    when:
+      event: push
+    image: 1and1internet/ubuntu-16-rspec
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     commands:
-      - export IMAGE=dronejob$CI_JOB_ID/${CI_REPO#*/}
-      - echo $IMAGE
-      - mkdir ../drone-tests ; git clone https://github.com/1and1internet/drone-tests.git ../drone-tests
-      - rspec -f documentation spec/spec_helper.rb
+      - make --environment-overrides do-test IMAGE_NAME=build-${CI_BUILD_NUMBER}-${CI_REPO#*/}/${CI_REPO#*/}
+
   publish:
     when:
-      branch: master
       event: push
-    image: 1and1internet/template-library-tools:giraffe
-    auth_config:
-     username: $$DOCKERHUB_USERNAME
-     password: $$DOCKERHUB_PASSWORD
-     email: $$DOCKERHUB_EMAIL
+    image: 1and1internet/template-library-tools
     volumes:
-     - /var/run/docker.sock:/var/run/docker.sock
-     - $$SHARED_BUILD_STORAGE:/tmp/image-comparison
-    environment:
-     - DOCKERHUB_USERNAME=$$DOCKERHUB_USERNAME
-     - DOCKERHUB_EMAIL=$$DOCKERHUB_EMAIL
-     - DOCKERHUB_PASSWORD=$$DOCKERHUB_PASSWORD
-     - DEPENDENCY_GRAPH_URL=$$DEPENDENCY_GRAPH_URL
-     - DEPENDENCY_GRAPH_USERNAME=$$DEPENDENCY_GRAPH_USERNAME
-     - DEPENDENCY_GRAPH_PASSWORD=$$DEPENDENCY_GRAPH_PASSWORD
-     - BUILD_TRIGGER_API_URL=$$BUILD_TRIGGER_API_URL
-     - BUILD_TRIGGER_API_USERNAME=$$BUILD_TRIGGER_API_USERNAME
-     - BUILD_TRIGGER_API_PASSWORD=$$BUILD_TRIGGER_API_PASSWORD
-     - TEMPLATE_UPDATER_URL=$$TEMPLATE_UPDATER_URL
-     - TEMPLATE_UPDATER_USERNAME=$$TEMPLATE_UPDATER_USERNAME
-     - TEMPLATE_UPDATER_PASSWORD=$$TEMPLATE_UPDATER_PASSWORD
-     - SHARED_BUILD_STORAGE=$$SHARED_BUILD_STORAGE
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /shared_storage:/shared_storage
+      - /secrets:/secrets
     commands:
-     - python3 -u /scripts/images/publish.py
+      - images_tool -s /secrets/ -w /shared_storage --image-name build-${CI_BUILD_NUMBER}-${CI_REPO#*/}/${CI_REPO#*/} --publish-image
+
+  clean_workspace:
+    when:
+      event: push
+      status: [success, failure]
+    image: 1and1internet/template-library-tools
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /shared_storage:/shared_storage
+      - /secrets:/secrets
+    commands:
+      - images_tool -s /secrets/ -w /shared_storage --image-name build-${CI_BUILD_NUMBER}-${CI_REPO#*/}/${CI_REPO#*/} --clean-workspace
+
+  clean_docker:
+    when:
+      event: push
+      status: [success, failure]
+    image: docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /secrets:/secrets
+    commands:
+      - docker rm -f $(docker ps -a | grep -v "$${HOSTNAME}" | awk '{print $1}') || true
+      - docker rmi -f $(docker images -q) || true

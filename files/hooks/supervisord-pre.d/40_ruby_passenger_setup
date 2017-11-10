@@ -10,17 +10,14 @@ if [ $EMPTY == 'true' ]; then
         if flock -n 9; then
             mkdir public
             cp -r /usr/src/* /var/www
-            
+
             gem install -N bundler
-            bundle --verbose install
+            bundle install
         else
             echo 'No lock, exiting'
             exit
         fi
     ) 9>/var/www/alockfile
-    
+
     rm -f /var/www/alockfile
 fi
-
-
-
